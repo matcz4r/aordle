@@ -2,106 +2,128 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Wordle</title>
 
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #121213;
-      color: white;
+      background: #f6f7f8;
+      color: #111;
       display: flex;
       justify-content: center;
-      align-items: center;
       min-height: 100vh;
     }
 
     .game {
-      text-align: center;
       width: 100%;
-      max-width: 400px;
-      padding: 20px;
+      max-width: 420px;
+      text-align: center;
+      padding: 16px;
     }
 
     h1 {
-      margin-bottom: 20px;
+      margin: 10px 0 20px;
     }
 
     .board {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 20px;
     }
 
     .row {
       display: flex;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .tile {
-      width: 60px;
-      height: 60px;
-      border: 2px solid #3a3a3c;
+      width: 52px;
+      height: 52px;
+      border: 2px solid #d3d6da;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 28px;
+      font-size: 26px;
       font-weight: bold;
       text-transform: uppercase;
-      background: #121213;
+      background: white;
     }
 
     .correct {
       background: #6aaa64;
       border-color: #6aaa64;
+      color: white;
     }
 
     .present {
       background: #c9b458;
       border-color: #c9b458;
+      color: white;
     }
 
     .absent {
       background: #787c7e;
       border-color: #787c7e;
+      color: white;
+    }
+
+    /* keyboard */
+    .keyboard {
+      margin-top: 10px;
+    }
+
+    .key-row {
+      display: flex;
+      justify-content: center;
+      margin: 6px 0;
+      gap: 4px;
+    }
+
+    .key {
+      padding: 12px 10px;
+      background: #d3d6da;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+      min-width: 26px;
+      text-align: center;
+    }
+
+    .key:active {
+      transform: scale(0.95);
+    }
+
+    .wide {
+      min-width: 60px;
+    }
+
+    .input-row {
+      margin-top: 10px;
     }
 
     input {
       width: 140px;
-      padding: 12px;
-      font-size: 20px;
-      text-align: center;
+      padding: 10px;
+      font-size: 18px;
       text-transform: uppercase;
-      border-radius: 8px;
-      border: none;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
 
     button {
-      padding: 12px 18px;
-      font-size: 18px;
-      margin-left: 10px;
+      padding: 10px 14px;
+      margin-left: 8px;
+      font-size: 16px;
       border: none;
-      border-radius: 8px;
-      background: #538d4e;
+      border-radius: 6px;
+      background: #6aaa64;
       color: white;
-    }
-
-    @media (max-width: 500px) {
-      .tile {
-        width: 52px;
-        height: 52px;
-        font-size: 24px;
-      }
-
-      input {
-        width: 120px;
-      }
     }
   </style>
 </head>
@@ -112,21 +134,15 @@
 
     <div id="board" class="board"></div>
 
-    <div>
-      <input
-        id="guessInput"
-        maxlength="5"
-        autocomplete="off"
-      />
-
-      <button onclick="submitGuess()">
-        Guess
-      </button>
+    <div class="input-row">
+      <input id="guessInput" maxlength="5" />
+      <button onclick="submitGuess()">Enter</button>
     </div>
+
+    <div class="keyboard" id="keyboard"></div>
   </div>
 
   <script>
-    // YOUR CUSTOM DICTIONARY
     const WORDS = [
       "APPLE",
       "GRAPE",
@@ -140,64 +156,101 @@
     const ANSWER =
       WORDS[Math.floor(Math.random() * WORDS.length)];
 
-    const MAX_GUESSES = 6;
-
+    const MAX = 6;
     let guesses = [];
+    let current = "";
+
+    const keyboardLayout = [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ];
 
     function drawBoard() {
-      const board =
-        document.getElementById("board");
-
+      const board = document.getElementById("board");
       board.innerHTML = "";
 
-      for (let row = 0; row < MAX_GUESSES; row++) {
-        const rowDiv =
-          document.createElement("div");
+      for (let r = 0; r < MAX; r++) {
+        const row = document.createElement("div");
+        row.className = "row";
 
-        rowDiv.className = "row";
+        const word = guesses[r] || "";
 
-        const guess = guesses[row] || "";
-
-        for (let col = 0; col < 5; col++) {
-          const tile =
-            document.createElement("div");
-
+        for (let c = 0; c < 5; c++) {
+          const tile = document.createElement("div");
           tile.className = "tile";
 
-          const letter = guess[col] || "";
-
+          const letter = word[c] || "";
           tile.textContent = letter;
 
-          if (guess) {
-            if (ANSWER[col] === letter) {
+          if (word) {
+            if (ANSWER[c] === letter) {
               tile.classList.add("correct");
-            } else if (
-              ANSWER.includes(letter)
-            ) {
+            } else if (ANSWER.includes(letter)) {
               tile.classList.add("present");
             } else {
               tile.classList.add("absent");
             }
           }
 
-          rowDiv.appendChild(tile);
+          row.appendChild(tile);
         }
 
-        board.appendChild(rowDiv);
+        board.appendChild(row);
       }
     }
 
+    function drawKeyboard() {
+      const kb = document.getElementById("keyboard");
+      kb.innerHTML = "";
+
+      keyboardLayout.forEach((row, i) => {
+        const rowDiv = document.createElement("div");
+        rowDiv.className = "key-row";
+
+        if (i === 2) {
+          const enter = document.createElement("div");
+          enter.className = "key wide";
+          enter.textContent = "ENTER";
+          enter.onclick = submitGuess;
+          rowDiv.appendChild(enter);
+        }
+
+        row.split("").forEach(letter => {
+          const key = document.createElement("div");
+          key.className = "key";
+          key.textContent = letter;
+
+          key.onclick = () => {
+            if (current.length < 5) {
+              current += letter;
+              document.getElementById("guessInput").value = current;
+            }
+          };
+
+          rowDiv.appendChild(key);
+        });
+
+        if (i === 2) {
+          const del = document.createElement("div");
+          del.className = "key wide";
+          del.textContent = "⌫";
+          del.onclick = () => {
+            current = current.slice(0, -1);
+            document.getElementById("guessInput").value = current;
+          };
+          rowDiv.appendChild(del);
+        }
+
+        kb.appendChild(rowDiv);
+      });
+    }
+
     function submitGuess() {
-      const input =
-        document.getElementById("guessInput");
+      const input = document.getElementById("guessInput");
+      const guess = (input.value || current).toUpperCase();
 
-      const guess =
-        input.value.toUpperCase();
-
-      if (guess.length !== 5) {
-        alert("5 letters only");
-        return;
-      }
+      if (guess.length !== 5) return;
 
       if (!WORDS.includes(guess)) {
         alert("Not in dictionary");
@@ -205,30 +258,20 @@
       }
 
       guesses.push(guess);
+      current = "";
+      input.value = "";
 
       drawBoard();
 
       if (guess === ANSWER) {
-        setTimeout(() => {
-          alert("You win!");
-        }, 100);
-
-        return;
+        setTimeout(() => alert("You win!"), 100);
+      } else if (guesses.length >= MAX) {
+        setTimeout(() => alert("Word was: " + ANSWER), 100);
       }
-
-      if (guesses.length >= MAX_GUESSES) {
-        setTimeout(() => {
-          alert(
-            "Game over! Word was: " +
-              ANSWER
-          );
-        }, 100);
-      }
-
-      input.value = "";
     }
 
     drawBoard();
+    drawKeyboard();
   </script>
 </body>
 </html>
