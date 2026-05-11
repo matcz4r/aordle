@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Wordle</title>
+  <title>Aordle</title>
 
   <style>
     body {
@@ -20,18 +20,19 @@
       width: 100%;
       max-width: 420px;
       text-align: center;
-      padding: 16px;
+      padding: 12px;
+      box-sizing: border-box;
     }
 
     h1 {
-      margin: 10px 0 20px;
+      margin: 10px 0 16px;
     }
 
     .board {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .row {
@@ -71,27 +72,33 @@
       color: white;
     }
 
-    /* keyboard */
+    /* KEYBOARD */
     .keyboard {
+      width: 100%;
       margin-top: 10px;
     }
 
     .key-row {
       display: flex;
       justify-content: center;
-      margin: 6px 0;
       gap: 4px;
+      margin: 6px 0;
     }
 
     .key {
-      padding: 12px 10px;
+      flex: 1;
+      max-width: 34px;
+      height: 58px;
       background: #d3d6da;
       border-radius: 5px;
       font-weight: bold;
-      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       user-select: none;
-      min-width: 26px;
-      text-align: center;
+      cursor: pointer;
+      transition: background 0.15s;
     }
 
     .key:active {
@@ -99,58 +106,71 @@
     }
 
     .wide {
-      min-width: 60px;
+      flex: 1.6;
+      max-width: 80px;
+      font-size: 12px;
     }
 
-    .input-row {
-      margin-top: 10px;
-    }
-
-    input {
-      width: 140px;
-      padding: 10px;
-      font-size: 18px;
-      text-transform: uppercase;
-      text-align: center;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    button {
-      padding: 10px 14px;
-      margin-left: 8px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      background: #6aaa64;
+    .key.correct {
+      background: #6aaa64 !important;
       color: white;
+    }
+
+    .key.present {
+      background: #c9b458 !important;
+      color: white;
+    }
+
+    .key.absent {
+      background: #787c7e !important;
+      color: white;
+    }
+
+    @media (max-width: 400px) {
+      .tile {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+      }
+
+      .key {
+        height: 52px;
+        font-size: 12px;
+      }
     }
   </style>
 </head>
 
 <body>
   <div class="game">
-    <h1>My Wordle</h1>
+    <h1>Aordle</h1>
 
     <div id="board" class="board"></div>
-
-    <div class="input-row">
-      <input id="guessInput" maxlength="5" />
-      <button onclick="submitGuess()">Enter</button>
-    </div>
-
-    <div class="keyboard" id="keyboard"></div>
+    <div id="keyboard" class="keyboard"></div>
   </div>
 
   <script>
     const WORDS = [
-      "APPLE",
-      "GRAPE",
-      "BRICK",
-      "CHAIR",
-      "FLAME",
-      "PLANT",
-      "MOUSE"
+      "AONNA",
+      "LEZZO",
+      "MERDA",
+      "UDDIO",
+      "PUZZA",
+      "SUINO",
+      "FIERO",
+      "UZZIO",
+      "PROPO",
+      "SACCO",
+      "UNTOH",
+      "EDERA",
+      "MHANZ",
+      "BAGNO",
+      "PEPPE",
+      "LAIDO",
+      "CARTA",
+      "NABBO",
+      "BUSTA",
+      "SMUSI"
     ];
 
     const ANSWER =
@@ -166,6 +186,58 @@
       "ZXCVBNM"
     ];
 
+    const keyStatus = {}; // A → correct/present/absent
+
+    function scoreGuess(guess) {
+      const result = Array(5).fill("absent");
+      const answerArr = ANSWER.split("");
+      const used = Array(5).fill(false);
+
+      // greens
+      for (let i = 0; i < 5; i++) {
+        if (guess[i] === answerArr[i]) {
+          result[i] = "correct";
+          used[i] = true;
+        }
+      }
+
+      // yellows
+      for (let i = 0; i < 5; i++) {
+        if (result[i] === "correct") continue;
+
+        for (let j = 0; j < 5; j++) {
+          if (!used[j] && guess[i] === answerArr[j]) {
+            result[i] = "present";
+            used[j] = true;
+            break;
+          }
+        }
+      }
+
+      return result;
+    }
+
+    function updateKeyStatus(guess, colors) {
+      for (let i = 0; i < guess.length; i++) {
+        const l = guess[i];
+        const c = colors[i];
+
+        const current = keyStatus[l];
+
+        // priority: correct > present > absent
+        if (c === "correct") {
+          keyStatus[l] = "correct";
+        } else if (
+          c === "present" &&
+          current !== "correct"
+        ) {
+          keyStatus[l] = "present";
+        } else if (!keyStatus[l]) {
+          keyStatus[l] = "absent";
+        }
+      }
+    }
+
     function drawBoard() {
       const board = document.getElementById("board");
       board.innerHTML = "";
@@ -174,26 +246,27 @@
         const row = document.createElement("div");
         row.className = "row";
 
-        const word = guesses[r] || "";
+        let word = guesses[r] || "";
+        if (r === guesses.length) word = current;
+
+        let colors = guesses[r]
+          ? scoreGuess(guesses[r])
+          : [];
 
         for (let c = 0; c < 5; c++) {
           const tile = document.createElement("div");
           tile.className = "tile";
+          tile.textContent = word[c] || "";
 
-          const letter = word[c] || "";
-          tile.textContent = letter;
-
-          if (word) {
-            if (ANSWER[c] === letter) {
-              tile.classList.add("correct");
-            } else if (ANSWER.includes(letter)) {
-              tile.classList.add("present");
-            } else {
-              tile.classList.add("absent");
-            }
+          if (colors[c]) {
+            tile.classList.add(colors[c]);
           }
 
           row.appendChild(tile);
+        }
+
+        if (guesses[r]) {
+          updateKeyStatus(guesses[r], colors);
         }
 
         board.appendChild(row);
@@ -216,17 +289,16 @@
           rowDiv.appendChild(enter);
         }
 
-        row.split("").forEach(letter => {
+        row.split("").forEach(l => {
           const key = document.createElement("div");
           key.className = "key";
-          key.textContent = letter;
 
-          key.onclick = () => {
-            if (current.length < 5) {
-              current += letter;
-              document.getElementById("guessInput").value = current;
-            }
-          };
+          if (keyStatus[l]) {
+            key.classList.add(keyStatus[l]);
+          }
+
+          key.textContent = l;
+          key.onclick = () => addLetter(l);
 
           rowDiv.appendChild(key);
         });
@@ -235,10 +307,7 @@
           const del = document.createElement("div");
           del.className = "key wide";
           del.textContent = "⌫";
-          del.onclick = () => {
-            current = current.slice(0, -1);
-            document.getElementById("guessInput").value = current;
-          };
+          del.onclick = backspace;
           rowDiv.appendChild(del);
         }
 
@@ -247,10 +316,9 @@
     }
 
     function submitGuess() {
-      const input = document.getElementById("guessInput");
-      const guess = (input.value || current).toUpperCase();
+      if (current.length !== 5) return;
 
-      if (guess.length !== 5) return;
+      const guess = current.toUpperCase();
 
       if (!WORDS.includes(guess)) {
         alert("Not in dictionary");
@@ -259,15 +327,30 @@
 
       guesses.push(guess);
       current = "";
-      input.value = "";
 
       drawBoard();
+      drawKeyboard();
 
       if (guess === ANSWER) {
         setTimeout(() => alert("You win!"), 100);
       } else if (guesses.length >= MAX) {
-        setTimeout(() => alert("Word was: " + ANSWER), 100);
+        setTimeout(() =>
+          alert("Word was: " + ANSWER),
+          100
+        );
       }
+    }
+
+    function addLetter(l) {
+      if (current.length < 5) {
+        current += l;
+        drawBoard();
+      }
+    }
+
+    function backspace() {
+      current = current.slice(0, -1);
+      drawBoard();
     }
 
     drawBoard();
