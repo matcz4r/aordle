@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>My Wordle</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #121213;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .game {
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .board {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tile {
+      width: 60px;
+      height: 60px;
+      border: 2px solid #3a3a3c;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      font-weight: bold;
+      text-transform: uppercase;
+      background: #121213;
+    }
+
+    .correct {
+      background: #6aaa64;
+      border-color: #6aaa64;
+    }
+
+    .present {
+      background: #c9b458;
+      border-color: #c9b458;
+    }
+
+    .absent {
+      background: #787c7e;
+      border-color: #787c7e;
+    }
+
+    input {
+      width: 140px;
+      padding: 12px;
+      font-size: 20px;
+      text-align: center;
+      text-transform: uppercase;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      padding: 12px 18px;
+      font-size: 18px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #538d4e;
+      color: white;
+    }
+
+    @media (max-width: 500px) {
+      .tile {
+        width: 52px;
+        height: 52px;
+        font-size: 24px;
+      }
+
+      input {
+        width: 120px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="game">
+    <h1>My Wordle</h1>
+
+    <div id="board" class="board"></div>
+
+    <div>
+      <input
+        id="guessInput"
+        maxlength="5"
+        autocomplete="off"
+      />
+
+      <button onclick="submitGuess()">
+        Guess
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // YOUR CUSTOM DICTIONARY
+    const WORDS = [
+      "APPLE",
+      "GRAPE",
+      "BRICK",
+      "CHAIR",
+      "FLAME",
+      "PLANT",
+      "MOUSE"
+    ];
+
+    const ANSWER =
+      WORDS[Math.floor(Math.random() * WORDS.length)];
+
+    const MAX_GUESSES = 6;
+
+    let guesses = [];
+
+    function drawBoard() {
+      const board =
+        document.getElementById("board");
+
+      board.innerHTML = "";
+
+      for (let row = 0; row < MAX_GUESSES; row++) {
+        const rowDiv =
+          document.createElement("div");
+
+        rowDiv.className = "row";
+
+        const guess = guesses[row] || "";
+
+        for (let col = 0; col < 5; col++) {
+          const tile =
+            document.createElement("div");
+
+          tile.className = "tile";
+
+          const letter = guess[col] || "";
+
+          tile.textContent = letter;
+
+          if (guess) {
+            if (ANSWER[col] === letter) {
+              tile.classList.add("correct");
+            } else if (
+              ANSWER.includes(letter)
+            ) {
+              tile.classList.add("present");
+            } else {
+              tile.classList.add("absent");
+            }
+          }
+
+          rowDiv.appendChild(tile);
+        }
+
+        board.appendChild(rowDiv);
+      }
+    }
+
+    function submitGuess() {
+      const input =
+        document.getElementById("guessInput");
+
+      const guess =
+        input.value.toUpperCase();
+
+      if (guess.length !== 5) {
+        alert("5 letters only");
+        return;
+      }
+
+      if (!WORDS.includes(guess)) {
+        alert("Not in dictionary");
+        return;
+      }
+
+      guesses.push(guess);
+
+      drawBoard();
+
+      if (guess === ANSWER) {
+        setTimeout(() => {
+          alert("You win!");
+        }, 100);
+
+        return;
+      }
+
+      if (guesses.length >= MAX_GUESSES) {
+        setTimeout(() => {
+          alert(
+            "Game over! Word was: " +
+              ANSWER
+          );
+        }, 100);
+      }
+
+      input.value = "";
+    }
+
+    drawBoard();
+  </script>
+</body>
+</html>
